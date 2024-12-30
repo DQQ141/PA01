@@ -1,0 +1,32 @@
+# 常见忽略文件
+*.[oO]
+*.[dD]
+.*
+*$*
+*.bin
+
+# 常见忽略文件夹
+.*/
+
+# -------------------------
+# keil 
+*.uvguix.*
+*.build_log.htm
+*_Project.dep
+JLinkLog.txt
+JModbusLog.txt
+msp/MDK-ARM/output/
+msp/MDK-ARM/DebugConfig/
+msp/MDK-ARM/RTE/
+release/
+
+# clion
+cmake-build-debug/
+
+# 不忽略的文件
+!.gitignore
+!.vscode/
+!.doc/
+!.keep
+!tools/release/
+!tools/bin/

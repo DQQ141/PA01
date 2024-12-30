@@ -1,0 +1,58 @@
+#! armclang -E --target=arm-arm-none-eabi -mcpu=cortex-m7 -xc
+/* 
+! armclang -E --target=arm-arm-none-eabi -mcpu=cortex-m7 -xc， 用于AC6编译报错（L6709E错误）时
+！armcc -E， 用于AC5编译报错（L6709E错误）时
+注意，设置必须放本文件第一行！否则还是报错！请注意调整顺序！
+*/
+ 
+LR_QFLASH_ROM 0x90000000 0x02000000  {; 外扩QSPI 32MB
+ ER_QFLASH_ROM 0x90000000 0x02000000  {; 896k 120Mhz nzw 1load address = execution address 
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.qflash_rom)
+    .ANY (+XO)
+    .ANY (+RO)
+    *.o (RESET, +First)
+    *(InRoot$$Sections)
+    *(Veneer$$Code)
+    *(.irom)
+  }
+  RW_IRAM_ITCM 0x00000400 0x0000FC00  {;ITCM SRAM 480MHz 64KB CPU直连, 指令缓存
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.iram_itcm)
+  }
+  RW_IRAM_DTCM 0x20000000 0x00020000  {;DTCM SRAM 480MHz 128KB
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.iram_dtcm)
+  }
+  RW_IRAM_D1_AXI 0x24000000 0x00080000  {;D1: AXI 240MHz 512KB
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.iram_axi)
+    .ANY (+ZI)
+    .ANY (+RW)
+
+    ; 时钟相关函数放到内存中执行 否则死机
+    main.o
+    stm32h7xx_hal_rcc.o
+    stm32h7xx_hal_rcc_ex.o
+  }
+  RW_RAM_D1_SDRAM 0xC0000000 UNINIT 0x00400000  {;D1:外扩SDRAM W9864G6KH-6I 4MB, 编译器无法初始化, 只能 UNINIT; bootloader初始化后就可以INIT了
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.bss.sdram)
+  }
+  RW_IRAM_D2_SRAM1 0x30000000 0x00020000  {;D2:SRAM1 128KB 240MHz
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.sram1)
+  }
+  RW_IRAM_D2_SRAM2 0x30020000 0x00020000  {;D2:SRAM2 128KB 240MHz
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.sram2)
+  }
+  RW_IRAM_D2_SRAM3 0x30040000 0x00008000  {;D2:SRAM3 32KB 240MHz 以太网和 USB的缓存只能用d3
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.sram3)
+  }
+  RW_IRAM_D3_SRAM4 0x38000000 0x00010000  {;D3:SRAM4 64KB 240MHz
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.sram4)
+  }
+}

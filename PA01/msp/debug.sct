@@ -1,0 +1,94 @@
+#! armclang -E --target=arm-arm-none-eabi -mcpu=cortex-m7 -xc
+/* 
+! armclang -E --target=arm-arm-none-eabi -mcpu=cortex-m7 -xc， 用于AC6编译报错（L6709E错误）时
+！armcc -E， 用于AC5编译报错（L6709E错误）时
+注意，设置必须放本文件第一行！否则还是报错！请注意调整顺序！
+*/
+
+
+LR_QFLASH_ROM 0x90000000 0x00800000  {;外扩QSPI W25Q64 8MB
+  ER_QFLASH_ROM 0x90000000 0x00800000  {; 896k 120Mhz nzw 1load address = execution address 
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.qflash_rom)
+    .ANY (+XO)
+    .ANY (+RO)
+  }
+}
+
+LR_IROM 0x08000000 0x00020000  {; 内部 FLASH
+  ER_IROM 0x08000000 0x00020000  {; H750是128KB
+    . = ALIGN(4); 确保以 4 字节对齐
+    *.o (RESET, +First)
+    *(InRoot$$Sections)
+    *(Veneer$$Code)
+    *(.irom)
+    *lib*
+
+    ; 加速文件
+    os_bsp.o
+    freertos.o 
+
+    ; 芯片启动必须文件
+    main.o
+    msp.o
+    fmc.o
+    gpio.o
+    dma.o
+    tim.o
+    quadspi.o
+    startup_stm32h750xx.o
+    system_stm32h7xx.o
+    stm32h7xx_hal_msp.o
+    stm32h7xx_hal.o
+    stm32h7xx_hal_cortex.o
+    stm32h7xx_hal_rcc.o
+    stm32h7xx_hal_rcc_ex.o
+    stm32h7xx_hal_pwr.o
+    stm32h7xx_hal_pwr_ex.o
+    stm32h7xx_hal_tim.o
+    stm32h7xx_hal_tim_ex.o
+    stm32h7xx_hal_timebase_tim.o
+    stm32h7xx_hal_qspi.o
+    stm32h7xx_it.o
+    stm32h7xx_hal_gpio.o 
+    stm32h7xx_hal_gpio_ex.o
+    stm32h7xx_ll_fmc.o
+    stm32h7xx_hal_dma.o
+    stm32h7xx_hal_sdram.o
+    stm32h7xx_hal_rtc.o
+  }
+  RW_IRAM_ITCM 0x00000400 0x0000FC00  {;ITCM SRAM 480MHz 64KB CPU直连, 指令缓存
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.iram_itcm)
+  }
+  RW_IRAM_DTCM 0x20000000 0x00020000  {;DTCM SRAM 480MHz 128KB
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.iram_dtcm)
+  }
+  RW_IRAM_D1_AXI 0x24000000 0x00080000  {;D1: AXI 240MHz 512KB
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.iram_axi)
+    .ANY (+ZI)
+    .ANY (+RW)
+  }
+  RW_RAM_D1_SDRAM 0xC0000000 UNINIT 0x00400000  {;D1:外扩SDRAM W9864G6KH-6I 4MB, 编译器无法初始化, 只能 UNINIT
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.bss.sdram)
+  }
+  RW_IRAM_D2_SRAM1 0x30000000 0x00020000  {;D2:SRAM1 128KB 240MHz
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.sram1)
+  }
+  RW_IRAM_D2_SRAM2 0x30020000 0x00020000  {;D2:SRAM2 128KB 240MHz
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.sram2)
+  }
+  RW_IRAM_D2_SRAM3 0x30040000 0x00008000  {;D2:SRAM3 32KB 240MHz 以太网和 USB的缓存只能用d3
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.sram3)
+  }
+  RW_IRAM_D3_SRAM4 0x38000000 0x00010000  {;D3:SRAM4 64KB 240MHz
+    . = ALIGN(4); 确保以 4 字节对齐
+    *(.sram4)
+  }
+}
